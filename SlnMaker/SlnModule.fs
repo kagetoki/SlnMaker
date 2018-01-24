@@ -1,49 +1,48 @@
 namespace SlnMaker
-
+open Utils
 
 [<RequireQualifiedAccess>]
 module Sln =
+    let internal createSln slnPath projects =
+        {path = slnPath; projects = projects  }
     let internal addProjectInternal sln prj =
         { sln with projects = Set.add prj sln.projects }
-    let getDependensiesRecursive parseProject project =
-        let parseRefs = List.map parseProject
-        let rec getDependensies parsingResults acc parsingErrors =
-            match parsingResults with 
-            | [] -> acc, parsingErrors
-            | [parsingResult] -> 
-                                match parsingResult with
-                                 | Ok proj -> getDependensies (parseRefs proj.projectRefs) 
-                                                <| Set.add proj acc 
-                                                <| parsingErrors
-                                 | Error e -> acc,Set.add e parsingErrors 
-            | headResult::tailResults -> 
-                                match headResult with
-                                 | Ok proj -> let acc,parsingErrors = 
-                                                getDependensies (parseRefs proj.projectRefs) 
-                                                <| Set.add proj acc 
-                                                <| parsingErrors
-                                              getDependensies tailResults acc parsingErrors
-                                 | Error e -> getDependensies tailResults acc <| Set.add e parsingErrors
         
-        getDependensies (parseRefs project.projectRefs) <| Set.add project Set.empty <| Set.empty
-
+    let parseDependenciesRecursive (parseProject: string->Result<ProjectFile,string>) projectPath =
+        let rec parseDependencies parseProject acc path  =
+            match parseProject path with
+            | Error e -> acc |> Set.add (Error e) 
+            | Ok project -> let acc = Set.add <| Ok project <| acc
+                            let accs = Seq.collect (parseDependencies parseProject acc) project.projectRefs
+                                        |> Set.ofSeq
+                            Set.union acc accs
+        parseDependencies parseProject Set.empty projectPath
+        |> Utils.combineResults                        
+    
     let addProject executeAdd sln project =
         match executeAdd sln project with
         | Ok() -> addProjectInternal sln project |> Ok
         | Error msg -> Error (msg, sln)
-
-    let addProjectRecursive executeAdd parseProject sln project =
-        let dependentProject,parsingErrors = getDependensiesRecursive parseProject project
-        let executeAdd sln prj =
-            match sln with
-            | Error e -> Error e
-            | Ok sln -> addProject executeAdd sln prj
-        let sln = Ok sln        
-        match dependentProject,parsingErrors with
-        | dependencies, errors when errors.Count > 0 -> 
-                    let res = Set.fold executeAdd sln dependencies
-                    match res with
-                    | Ok sln -> Error (errors, sln)
-                    | Error (parsingErrors,sln) -> Error (Set.union errors parsingErrors, sln) 
-        | dependencies, _ -> Set.fold executeAdd sln dependencies                             
-        
+    
+    let addProjectsRecursive (executeAdd: Solution -> ProjectFile-> Result<unit,string>) 
+                              parseProject slnPath projectPath =
+        let createSln = createSln slnPath
+        let executeAdd sln prj = 
+                match addProject executeAdd sln prj with
+                | Error (msg, sln) -> Error(Set.singleton msg,sln)
+                | Ok sln -> Ok sln
+        let rec add projects (sln:Result<Solution,(Set<string>*Solution)>) =
+            match sln, projects with
+            | sln, [] -> sln
+            | Ok sln, prj::projects -> executeAdd sln prj |> add projects
+            | Error (e, sln), prj::projects -> match (executeAdd sln prj |> add projects) with
+                                                   | Ok sln -> Error(e, sln)
+                                                   | Error (e1, sln) -> Error(Set.union e1 e, sln)
+        operation {
+            let! sln = match parseDependenciesRecursive parseProject projectPath with
+                                | Ok dependencies -> createSln dependencies |> Ok
+                                | Error (dependencies,errors) -> Error(errors, createSln dependencies)
+            
+            return! add <| List.ofSeq sln.projects <| Ok (createSln Set.empty)
+        }
+   

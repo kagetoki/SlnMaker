@@ -3,6 +3,7 @@ open SlnMaker.Utils
 open System
 open System.IO
 
+[<RequireQualifiedAccess>]
 module FileParser =
     open System.Xml.Linq;
     

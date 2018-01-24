@@ -1,4 +1,5 @@
 namespace SlnMaker
+
 type public ProjectFile = 
     {
         path:string
@@ -27,7 +28,8 @@ module Utils =
             | Error e -> Error e
             | Ok x -> f x
         member __.Return x = Ok x
-
+        member __.ReturnFrom x = x
+    
     type OrElseBuilder() =
         member __.ReturnFrom(x) = x
         member __.Combine (a,b) = 
@@ -59,6 +61,23 @@ module Utils =
         | Some x -> Ok x
         | None -> Error errorMsg    
 
+    let combineResults results =
+        let combiner (acc) (item:Result<'a,'e>) =
+            match item,acc with
+            | Error e, Error (oks, errors) -> Error (oks,Set.add e errors)
+            | Ok ok, Ok lst -> Set.add ok lst |> Ok
+            | Error e, Ok lst -> Error (lst, Set.singleton e) 
+            | Ok ok, Error (oks,errors) -> Error(Set.add ok oks,errors)
+        Seq.fold combiner <| Ok Set.empty <| results
+
+    let combineSetResults results =
+        let combiner acc (result:Result<Set<'a>,Set<'a> *Set<'b>>) =
+            match result, acc with
+            | Error (ok,e) , Error (oks, errs) -> Error(Set.union ok oks, Set.union errs e)
+            | Ok ok, Ok lst -> Set.union ok lst |> Ok
+            | Error (ok,e) , Ok lst -> Error(Set.union ok lst, e)
+            | Ok ok, Error (oks,errors) -> Error(Set.union ok oks, errors)
+        Seq.fold combiner <| Ok Set.empty <| results
     let listToResult results =
         let rec loop results acc =
             match results with
