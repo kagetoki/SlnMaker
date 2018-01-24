@@ -9,6 +9,7 @@ module DotNetCli =
         pInfo.WindowStyle <- ProcessWindowStyle.Hidden
         pInfo.UseShellExecute <- false
         pInfo.RedirectStandardOutput <- true
+        pInfo.RedirectStandardError <- true
         pInfo
     let setCurrentDirCmd dir =
         sprintf "cd %s" dir
@@ -28,10 +29,12 @@ module DotNetCli =
             cmdProcess.StartInfo <- getCmdProcessInfo cmd
             if not <| cmdProcess.Start() then Error "failed to start"
             else
-            let output = cmdProcess.StandardOutput.ReadToEnd() //|> System.Console.WriteLine
+            let output = cmdProcess.StandardOutput.ReadToEnd() 
+            let error = cmdProcess.StandardError.ReadToEnd()
             System.Console.WriteLine output
-            cmdProcess.WaitForExit()
-            Ok output
+            match cmdProcess.WaitForExit(4000) with
+            | true -> Ok output
+            | false -> Error <| sprintf "Process exited with timeout %s" error
         with
         | Failure m -> Error m
        
@@ -53,7 +56,3 @@ module DotNetCli =
         addProjectCmd sln projects
         |> executeCmd
         |> validateOutput isValid
-// [<RequireQualifiedAccess>]
-// module CompositionRoot =
-//     let generateSln rootProjectPath =
-//         2

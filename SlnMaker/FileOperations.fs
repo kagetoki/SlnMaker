@@ -36,21 +36,30 @@ module FileParser =
                                  attr.Value)
             |> List.ofSeq
         
+    let getSlnDir projectPath =
+        if isPathValid projectPath then
+            let fileInfo = FileInfo projectPath
+            fileInfo.Directory.Parent.FullName 
+            |> Ok
+        else
+            Error <| sprintf "Path is invalid %s" projectPath
+    let getProjectName path =
+        match isPathValid path with
+        | false -> Error <| sprintf "Path is invalid %s" path
+        | true -> tryDo Path.GetFileNameWithoutExtension path
     
     let parseProject path =
         let tryParse = tryDo File.ReadAllText
         let tryParseRefs = tryDo parseReferences
-        let tryGetName = tryDo Path.GetFileNameWithoutExtension
-        let projectFileInfo = FileInfo path
-        let slnDir = projectFileInfo.Directory.Parent.FullName
-        let parseErrorMsg = sprintf "invalid path: %s" path
-        let toAbsolutePath = toAbsolutePath slnDir>>optionToResult parseErrorMsg
+        let parsingErrorMsg = sprintf "invalid path: %s" path
         operation
             {
+                let! slnDir = getSlnDir path
+                let toAbsolutePath = toAbsolutePath slnDir>>optionToResult parsingErrorMsg
                 let! content = tryParse path
                 let! references = tryParseRefs content 
                 let! references = references |> List.map toAbsolutePath |> listToResult
-                let! projectName = tryGetName path
+                let! projectName = getProjectName path
                 return { path=path; 
                          content = content; 
                          name = projectName; 
