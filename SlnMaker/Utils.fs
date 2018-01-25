@@ -45,11 +45,6 @@ module Utils =
         | null | "" -> true
         | _ -> false
 
-    let ifNotThenNone f x =
-        match f x with
-        | true -> Some x
-        | false -> None     
-
     let tryDo f x =
         try
             f x |> Ok
@@ -87,3 +82,5 @@ module Utils =
                            | Ok res -> res::acc |> loop tail 
                            
         loop results []    
+
+    let (<??>) a b = if isNull a then b else a   

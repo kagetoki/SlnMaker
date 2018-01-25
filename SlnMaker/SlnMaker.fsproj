@@ -7,6 +7,6 @@
     <Compile Include="SlnModule.fs" />
     <Compile Include="FileOperations.fs" />
     <Compile Include="DotNetCLI.fs" />
-    <Compile Include="SlnMaker.fs" />
+    <Compile Include="Maker.fs" />
   </ItemGroup>
 </Project>

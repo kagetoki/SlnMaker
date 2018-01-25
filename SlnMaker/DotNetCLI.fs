@@ -1,6 +1,6 @@
 namespace SlnMaker
 open System.Diagnostics
-
+open Utils
 [<RequireQualifiedAccess>]
 module DotNetCli =
     let internal getCmdProcessInfo cmd =
@@ -34,7 +34,7 @@ module DotNetCli =
             System.Console.WriteLine output
             match cmdProcess.WaitForExit(4000) with
             | true -> Ok output
-            | false -> Error <| sprintf "Process exited with timeout %s" error
+            | false -> Error <| sprintf "Process exited with timeout %s" (error <??> output)
         with
         | Failure m -> Error m
        
@@ -47,9 +47,12 @@ module DotNetCli =
     let createSln slnDir slnName =
         let isValid output = Utils.isNullOrEmpty output |> not 
                              && output.Contains("successfully")
-        createSlnCmd slnDir slnName
-        |> executeCmd
-        |> validateOutput isValid
+        let created = createSlnCmd slnDir slnName
+                        |> executeCmd
+                        |> validateOutput isValid
+        match created with
+        | Error m -> sprintf "Solution creation failed %s" m |> Error
+        | ok -> ok
     let executeAdd sln projects =
         let isValid output = Utils.isNullOrEmpty output |> not 
                              && (output.Contains("added to the solution") || output.Contains("already contains"))
