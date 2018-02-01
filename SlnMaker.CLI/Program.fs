@@ -13,7 +13,7 @@ let fromOk result =
 
 [<EntryPoint>]
 let main argv =
-    let projectPath =  @"C:\Users\elusi\Source\Repos\bandlab\bandlab-backend\src\BandLab.Activity.Functions\BandLab.Activity.Functions.csproj"
+    let projectPath =  @""
     let result = Maker.generateSln projectPath
     match result with
     | Ok sln -> for p in sln.projects do
