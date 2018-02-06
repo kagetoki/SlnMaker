@@ -1,6 +1,6 @@
 namespace SlnMaker
 open System.Diagnostics
-open Utils
+
 [<RequireQualifiedAccess>]
 module DotNetCli =
     let internal getCmdProcessInfo cmd =

@@ -2,7 +2,7 @@ namespace SlnMaker
 open SlnMaker.Utils
 
 [<RequireQualifiedAccess>]
-module Maker =
+module public Maker =
     let private wrapSlnResult sln =
         match sln with
         | Ok sln -> Ok sln

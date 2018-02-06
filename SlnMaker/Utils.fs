@@ -1,18 +1,6 @@
 namespace SlnMaker
 
-type public ProjectFile = 
-    {
-        path:string
-        name:string
-        projectRefs:string list
-        content:string
-    }
-type public  Solution =
-    {
-        path:string
-        projects: Set<ProjectFile>
-    }
-
+[<AutoOpen>]
 module Utils =
     type MaybeBuilder() =
         member __.Bind(x,f) =
@@ -29,17 +17,10 @@ module Utils =
             | Ok x -> f x
         member __.Return x = Ok x
         member __.ReturnFrom x = x
-    
-    type OrElseBuilder() =
-        member __.ReturnFrom(x) = x
-        member __.Combine (a,b) = 
-            match a with
-            | true  -> a  
-            | false -> b   
-        member __.Delay(f) = f()
+
     let maybe = MaybeBuilder()
     let operation = OperationBuilder()
-    let orElse = OrElseBuilder()
+
     let isNullOrEmpty str =
         match str with
         | null | "" -> true
@@ -49,38 +30,39 @@ module Utils =
         try
             f x |> Ok
         with
-        | Failure msg -> Error msg    
+        | Failure msg -> Error msg
 
     let optionToResult errorMsg x = 
         match x with
         | Some x -> Ok x
-        | None -> Error errorMsg    
+        | None -> Error errorMsg
 
     let combineResults results =
         let combiner (acc) (item:Result<'a,'e>) =
             match item,acc with
-            | Error e, Error (oks, errors) -> Error (oks,Set.add e errors)
+            | Error e, Error (oks, errors) -> Error (oks, Set.add e errors)
             | Ok ok, Ok lst -> Set.add ok lst |> Ok
             | Error e, Ok lst -> Error (lst, Set.singleton e) 
-            | Ok ok, Error (oks,errors) -> Error(Set.add ok oks,errors)
+            | Ok ok, Error (oks, errors) -> Error(Set.add ok oks, errors)
         Seq.fold combiner <| Ok Set.empty <| results
 
     let combineSetResults results =
         let combiner acc (result:Result<Set<'a>,Set<'a> *Set<'b>>) =
             match result, acc with
-            | Error (ok,e) , Error (oks, errs) -> Error(Set.union ok oks, Set.union errs e)
+            | Error (ok, e) , Error (oks, errs) -> Error(Set.union ok oks, Set.union errs e)
             | Ok ok, Ok lst -> Set.union ok lst |> Ok
-            | Error (ok,e) , Ok lst -> Error(Set.union ok lst, e)
-            | Ok ok, Error (oks,errors) -> Error(Set.union ok oks, errors)
+            | Error (ok, e) , Ok lst -> Error(Set.union ok lst, e)
+            | Ok ok, Error (oks, errors) -> Error(Set.union ok oks, errors)
         Seq.fold combiner <| Ok Set.empty <| results
+
     let listToResult results =
         let rec loop results acc =
             match results with
             | [] -> Ok acc
             | res::tail -> match res with
                            | Error e -> Error e 
-                           | Ok res -> res::acc |> loop tail 
-                           
-        loop results []    
+                           | Ok res -> res::acc |> loop tail
 
-    let (<??>) a b = if isNull a then b else a   
+        loop results []
+
+    let (<??>) a b = if isNull a then b else a

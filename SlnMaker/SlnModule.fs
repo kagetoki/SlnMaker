@@ -1,5 +1,18 @@
 namespace SlnMaker
-open Utils
+
+type public ProjectFile = 
+    {
+        path:string
+        name:string
+        projectRefs:string list
+        content:string
+    }
+type public Solution =
+    {
+        path:string
+        projects: Set<ProjectFile>
+    }
+
 
 [<RequireQualifiedAccess>]
 module Sln =
@@ -17,7 +30,7 @@ module Sln =
                                         |> Set.ofSeq
                             Set.union acc accs
         parseDependencies parseProject Set.empty projectPath
-        |> Utils.combineResults                        
+        |> combineResults                        
     
     let addProject executeAdd sln project =
         match executeAdd sln project with

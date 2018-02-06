@@ -16,12 +16,9 @@ module FileParser =
                                                 |> List.ofArray 
                                                 |> containsAny 
     let internal isPathValid path = 
-        orElse
-              {
-                  return! isNullOrEmpty path |> not
-                  return! containsInvalidCharacters path |> not
-                  return! Uri.IsWellFormedUriString(path, UriKind.RelativeOrAbsolute)
-              }
+        isNullOrEmpty path |> not
+        && containsInvalidCharacters path |> not
+        && Uri.IsWellFormedUriString(path, UriKind.RelativeOrAbsolute)
 
     let internal toAbsolutePath slnDir path =
         match isPathValid path with
