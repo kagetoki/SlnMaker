@@ -1,7 +1,8 @@
 namespace SlnMaker
 open System
 
-module CLI =
+[<RequireQualifiedAccess>]
+module MakerCli =
 
     [<Literal>]
     let private HELP = @"Usage: 
@@ -23,7 +24,7 @@ For exit print :q"
     [<Literal>]
     let private PROJECT_PATH = "-p"
 
-    let emptyCommandContent = { dir = None; projectName = None; sln = None; projectPath = None; invalidParam = None }
+    let private emptyCommandContent = { dir = None; projectName = None; sln = None; projectPath = None; invalidParam = None }
 
     let private parseCommand (args: string []) =
         let rec parseCmdRec index command =
@@ -50,7 +51,7 @@ For exit print :q"
         | args when args.Length < 2 -> InvalidCmd <| InvalidParam args.[0]
         | _ -> Command [] |> parseCmdRec 0 
 
-    let validateCommand cmd =
+    let private validateCommand cmd =
         match cmd with
         | {dir = Some (Dir _); sln = Some (SlnName _); projectPath = Some (ProjectPath _); projectName = None; invalidParam = None}
         | {dir = Some (Dir _); sln = Some (SlnName _); projectPath = None; projectName = Some (ProjectName _); invalidParam = None}
@@ -58,7 +59,7 @@ For exit print :q"
         | {dir = None; sln = None; projectPath = Some (ProjectPath _); projectName = None; invalidParam = None } -> Valid cmd
         | _ -> Invalid HELP
 
-    let buildCmdContent prms =
+    let private buildCmdContent prms =
         let update cmd prm =
             match cmd with
             | Error e -> Error e
@@ -72,21 +73,21 @@ For exit print :q"
 
         List.fold update (Ok emptyCommandContent) prms
 
-    let rec openDialog() =
+    let rec performDialog() =
         printfn "%s" HELP
         let text = Console.ReadLine().Split(" ")
         if text.Length > 0 && text.[0] = ":q" then ()
         else
         match parseCommand text with
-        | EmptyCmd -> openDialog()
+        | EmptyCmd -> performDialog()
         | InvalidCmd p -> printfn "Invalid parameter %A" p
-                          openDialog()
+                          performDialog()
         | Command prms -> match buildCmdContent prms with
                           | Error e -> printfn "Invalid parameter %A" e
-                                       openDialog()
+                                       performDialog()
                           | Ok cmd -> match validateCommand cmd with
                                       | Invalid _ -> Console.WriteLine "Invalid command"
-                                                     openDialog()
+                                                     performDialog()
                                       | Valid cmd -> let result = Maker.generateSolution cmd
                                                      match result with
                                                      | Ok sln -> printfn "Solution created successfully!"

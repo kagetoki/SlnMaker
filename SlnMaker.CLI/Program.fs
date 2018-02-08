@@ -4,7 +4,7 @@ open System
 [<EntryPoint>]
 let main argv =
     
-    CLI.openDialog()
+    MakerCli.performDialog()
     // match result with
     // | Ok sln -> for p in sln.projects do
     //                 printfn "prj: %s" p.name
