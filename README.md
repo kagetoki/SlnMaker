@@ -1,7 +1,7 @@
-## SlnMaker
+# SlnMaker
 Utility for creating .sln files for existing projects with automatic adding project references
 
-# Usage
+## Usage
 Pass following parameters to CLI:
 
 -p <project path> or
