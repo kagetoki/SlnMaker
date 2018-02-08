@@ -4,7 +4,7 @@ open System
 open System.IO
 
 [<RequireQualifiedAccess>]
-module FileParser =
+module FileOperation =
     open System.Xml.Linq;
     
     let rec internal containsAny (chars: char list) (str:string) =
@@ -16,9 +16,9 @@ module FileParser =
                                                 |> List.ofArray 
                                                 |> containsAny 
     let internal isPathValid path = 
-        isNullOrEmpty path |> not
-        && containsInvalidCharacters path |> not
-        && Uri.IsWellFormedUriString(path, UriKind.RelativeOrAbsolute)
+        (System.String.IsNullOrWhiteSpace path |> not)
+        && (containsInvalidCharacters path |> not)
+        //&& (Uri.IsWellFormedUriString(path, UriKind.RelativeOrAbsolute))
 
     let internal toAbsolutePath slnDir path =
         match isPathValid path with
@@ -40,11 +40,23 @@ module FileParser =
             |> Ok
         else
             Error <| sprintf "Path is invalid %s" projectPath
-    let getProjectName path =
+    let getFileNameWithoutExtension path =
         match isPathValid path with
         | false -> Error <| sprintf "Path is invalid %s" path
         | true -> tryDo Path.GetFileNameWithoutExtension path
-    
+
+    let getProjectDir projectName =
+        match projectName with
+        | null|"" -> ""
+        | name -> Path.GetFileNameWithoutExtension name
+
+    let combinePath (path: string) (name: string) =
+        match path, name with
+        | null,_|"",_ -> name
+        | _,null|_,"" -> path
+        | path, name ->
+            Path.Combine(path.TrimEnd('\\'), name.TrimStart('\\'))
+
     let parseProject path =
         let tryParse = tryDo File.ReadAllText
         let tryParseRefs = tryDo parseReferences
@@ -56,7 +68,7 @@ module FileParser =
                 let! content = tryParse path
                 let! references = tryParseRefs content 
                 let! references = references |> List.map toAbsolutePath |> listToResult
-                let! projectName = getProjectName path
+                let! projectName = getFileNameWithoutExtension path
                 return { path=path; 
                          content = content; 
                          name = projectName; 

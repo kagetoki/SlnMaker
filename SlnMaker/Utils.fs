@@ -21,10 +21,7 @@ module Utils =
     let maybe = MaybeBuilder()
     let operation = OperationBuilder()
 
-    let isNullOrEmpty str =
-        match str with
-        | null | "" -> true
-        | _ -> false
+    let isNullOrEmpty = System.String.IsNullOrEmpty
 
     let tryDo f x =
         try

@@ -1,39 +1,18 @@
 namespace SlnMaker
-
-type ValidationResult<'Model, 'Error> =
-    | Valid of 'Model
-    | Invalid of 'Error
-
-type CommandParameter = 
-    | Dir of string
-    | SlnName of string
-    | ProjectPath of string
-    | ProjectName of string
-    | InvalidParam of string
-
-type Command =
-    | EmptyCmd
-    | InvalidCmd of CommandParameter
-    | Command of CommandParameter list
-
-type CommandContent =
-    {
-        dir: CommandParameter option
-        sln: CommandParameter option
-        projectPath: CommandParameter option
-        projectName: CommandParameter option
-        invalidParam: CommandParameter option
-    }
+open System
 
 module CLI =
 
     [<Literal>]
-    let private HELP = @"Usage: -p <project path> or
+    let private HELP = @"Usage: 
+-p <project path> or
 -d <sln directory> -s <sln name> -p <project path> or
 -d <sln directory> -s <sln name> -pn <project name>
 
 When project name is specified, it's assumed, that project is stored to its folder with same name.
-It's also assumed that by default project folder is located in solution folder"
+It's also assumed that by default project folder is located in solution folder.
+
+For exit print :q"
 
     [<Literal>]
     let private DIR = "-d"
@@ -92,3 +71,24 @@ It's also assumed that by default project folder is located in solution folder"
                 | ProjectName _ as p -> if cmd.projectName = None then Ok {cmd with projectName = Some p} else p |> Error
 
         List.fold update (Ok emptyCommandContent) prms
+
+    let rec openDialog() =
+        printfn "%s" HELP
+        let text = Console.ReadLine().Split(" ")
+        if text.Length > 0 && text.[0] = ":q" then ()
+        else
+        match parseCommand text with
+        | EmptyCmd -> openDialog()
+        | InvalidCmd p -> printfn "Invalid parameter %A" p
+                          openDialog()
+        | Command prms -> match buildCmdContent prms with
+                          | Error e -> printfn "Invalid parameter %A" e
+                                       openDialog()
+                          | Ok cmd -> match validateCommand cmd with
+                                      | Invalid _ -> Console.WriteLine "Invalid command"
+                                                     openDialog()
+                                      | Valid cmd -> let result = Maker.generateSolution cmd
+                                                     match result with
+                                                     | Ok sln -> printfn "Solution created successfully!"
+                                                                 printfn "%A" sln.path
+                                                     | Error e -> printfn "Errors occured: %s" e

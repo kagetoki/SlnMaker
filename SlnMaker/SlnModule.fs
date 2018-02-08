@@ -1,18 +1,5 @@
 namespace SlnMaker
 
-type public ProjectFile = 
-    {
-        path:string
-        name:string
-        projectRefs:string list
-        content:string
-    }
-type public Solution =
-    {
-        path:string
-        projects: Set<ProjectFile>
-    }
-
 
 [<RequireQualifiedAccess>]
 module Sln =
