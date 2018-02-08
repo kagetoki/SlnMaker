@@ -6,14 +6,20 @@ module MakerCli =
 
     [<Literal>]
     let private HELP = @"Usage: 
--p <project path> or
--d <sln directory> -s <sln name> -p <project path> or
+-p <project path> 
+or
+-d <sln directory> -s <sln name> -p <project path> 
+or
 -d <sln directory> -s <sln name> -pn <project name>
 
 When project name is specified, it's assumed, that project is stored to its folder with same name.
 It's also assumed that by default project folder is located in solution folder.
 
 For exit print :q"
+
+    let private sayFairwell() =
+        printf "Press any key to continue..."
+        Console.ReadKey() |> ignore
 
     [<Literal>]
     let private DIR = "-d"
@@ -92,4 +98,6 @@ For exit print :q"
                                                      match result with
                                                      | Ok sln -> printfn "Solution created successfully!"
                                                                  printfn "%A" sln.path
+                                                                 sayFairwell()
                                                      | Error e -> printfn "Errors occured: %s" e
+                                                                  sayFairwell()
