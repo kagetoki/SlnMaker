@@ -6,20 +6,16 @@ module MakerCli =
 
     [<Literal>]
     let private HELP = @"Usage: 
--p <project path> 
-or
--d <sln directory> -s <sln name> -p <project path> 
-or
--d <sln directory> -s <sln name> -pn <project name>
+    -p <project path> 
+    or
+    -d <sln directory> -s <sln name> -p <project path> 
+    or
+    -d <sln directory> -s <sln name> -pn <project name>
 
-When project name is specified, it's assumed, that project is stored to its folder with same name.
-It's also assumed that by default project folder is located in solution folder.
+    When project name is specified, it's assumed, that project is stored to its folder with same name.
+    It's also assumed that by default project folder is located in solution folder.
 
-For exit print :q"
-
-    let private sayFairwell() =
-        printf "Press any key to continue..."
-        Console.ReadKey() |> ignore
+    For exit print :q"
 
     [<Literal>]
     let private DIR = "-d"
@@ -79,25 +75,45 @@ For exit print :q"
 
         List.fold update (Ok emptyCommandContent) prms
 
+    let printWithColor color format data =
+        let oldColor = Console.ForegroundColor
+        Console.ForegroundColor <- color
+        printfn format data
+        Console.ForegroundColor <- oldColor
+
+    let printfErr f d = printWithColor ConsoleColor.Red f d
+    let printfInfo f d = printWithColor ConsoleColor.DarkGreen f d
+
+    let printfText f d = printWithColor ConsoleColor.Cyan f d
+
+    let printErr a = printfErr "%A" a
+    let printInfo a = printfInfo "%A" a
+    let printText a = printfText "%A" a
+
+    let private sayFairwell() =
+        printText "Press any key to continue..."
+        Console.ReadKey() |> ignore
+
     let rec performDialog() =
-        printfn "%s" HELP
+        Console.ForegroundColor <- ConsoleColor.Green
+        printText HELP
         let text = Console.ReadLine().Split(" ")
         if text.Length > 0 && text.[0] = ":q" then ()
         else
         match parseCommand text with
         | EmptyCmd -> performDialog()
-        | InvalidCmd p -> printfn "Invalid parameter %A" p
+        | InvalidCmd p -> printfErr "Invalid parameter %A" p
                           performDialog()
         | Command prms -> match buildCmdContent prms with
-                          | Error e -> printfn "Invalid parameter %A" e
+                          | Error e -> printfErr "Invalid parameter %A" e
                                        performDialog()
                           | Ok cmd -> match validateCommand cmd with
-                                      | Invalid _ -> Console.WriteLine "Invalid command"
+                                      | Invalid _ -> printErr "Invalid command"
                                                      performDialog()
                                       | Valid cmd -> let result = Maker.generateSolution cmd
                                                      match result with
-                                                     | Ok sln -> printfn "Solution created successfully!"
-                                                                 printfn "%A" sln.path
+                                                     | Ok sln -> printInfo "Solution created successfully!"
+                                                                 printInfo sln.path
                                                                  sayFairwell()
-                                                     | Error e -> printfn "Errors occured: %s" e
+                                                     | Error e -> printfErr "Errors occured: %s" e
                                                                   sayFairwell()
