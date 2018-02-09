@@ -90,9 +90,40 @@ module MakerCli =
     let printInfo a = printfInfo "%A" a
     let printText a = printfText "%A" a
 
+    let rec ifUserWantsToContinue() =
+        printText "Are you willing to continue? [y/n]"
+        match Console.ReadLine() with
+        | "y" | "Y" -> true
+        | "n" | "N" -> false
+        | _ -> printText "Please press 'y' or 'n'"
+               ifUserWantsToContinue()
+
     let private sayFairwell() =
         printText "Press any key to continue..."
         Console.ReadKey() |> ignore
+
+    let executeCommand onFail onSuccess cmdText =
+        match parseCommand cmdText with
+        | EmptyCmd -> onFail()
+        | InvalidCmd p -> printfErr "Invalid parameter %A" p
+                          onFail()
+        | Command prms -> match buildCmdContent prms with
+                          | Error e -> printfErr "Invalid parameter %A" e
+                                       onFail()
+                          | Ok cmd -> match validateCommand cmd with
+                                      | Invalid _ -> printErr "Invalid command"
+                                                     onFail()
+                                      | Valid cmd -> let result = Maker.generateSolution cmd
+                                                     match result with
+                                                     | Ok sln -> printInfo "Solution created successfully!"
+                                                                 printInfo sln.path
+                                                                 onSuccess()
+                                                     | Error e -> printfErr "Errors occured: %s" e
+                                                                  onSuccess()
+
+    let onSuccess again () =
+        if ifUserWantsToContinue() then again()
+        else sayFairwell()
 
     let rec performDialog() =
         Console.ForegroundColor <- ConsoleColor.Green
@@ -100,20 +131,4 @@ module MakerCli =
         let text = Console.ReadLine().Trim().Split(" ")
         if text.Length > 0 && text.[0] = ":q" then ()
         else
-        match parseCommand text with
-        | EmptyCmd -> performDialog()
-        | InvalidCmd p -> printfErr "Invalid parameter %A" p
-                          performDialog()
-        | Command prms -> match buildCmdContent prms with
-                          | Error e -> printfErr "Invalid parameter %A" e
-                                       performDialog()
-                          | Ok cmd -> match validateCommand cmd with
-                                      | Invalid _ -> printErr "Invalid command"
-                                                     performDialog()
-                                      | Valid cmd -> let result = Maker.generateSolution cmd
-                                                     match result with
-                                                     | Ok sln -> printInfo "Solution created successfully!"
-                                                                 printInfo sln.path
-                                                                 sayFairwell()
-                                                     | Error e -> printfErr "Errors occured: %s" e
-                                                                  sayFairwell()
+        executeCommand performDialog (onSuccess performDialog) text
