@@ -33,12 +33,18 @@ module FileOperation =
             |> List.ofSeq
         
     let getSlnDir projectPath =
+        let error = Error <| sprintf "Path [%s] is invalid " projectPath
         if isPathValid projectPath then
+            try
             let fileInfo = FileInfo projectPath
-            fileInfo.Directory.Parent.FullName 
-            |> Ok
+            if isNull fileInfo |> not && File.Exists fileInfo.FullName then
+                fileInfo.Directory.Parent.FullName
+                |> Ok
+            else
+                error 
+            with | Failure m -> Error m
         else
-            Error <| sprintf "Path is invalid %s" projectPath
+            error
     let getFileNameWithoutExtension path =
         match isPathValid path with
         | false -> Error <| sprintf "Path is invalid %s" path

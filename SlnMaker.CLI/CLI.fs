@@ -97,7 +97,7 @@ module MakerCli =
     let rec performDialog() =
         Console.ForegroundColor <- ConsoleColor.Green
         printText HELP
-        let text = Console.ReadLine().Split(" ")
+        let text = Console.ReadLine().Trim().Split(" ")
         if text.Length > 0 && text.[0] = ":q" then ()
         else
         match parseCommand text with

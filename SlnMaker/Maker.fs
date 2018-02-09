@@ -3,6 +3,7 @@ open SlnMaker.Utils
 
 [<RequireQualifiedAccess>]
 module public Maker =
+
     let private wrapSlnResult sln =
         match sln with
         | Ok sln -> Ok sln
