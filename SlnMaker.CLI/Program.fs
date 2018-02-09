@@ -6,7 +6,6 @@ let main argv =
 
     if argv.Length > 0 then
         MakerCli.executeCommand dontCare dontCare argv
-        0
     else
-    MakerCli.performDialog()
+        MakerCli.performDialog()
     0 // return an integer exit code
