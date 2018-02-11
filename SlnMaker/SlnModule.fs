@@ -38,7 +38,7 @@ module Sln =
             | Error (e, sln), prj::projects -> match (executeAdd sln prj |> add projects) with
                                                    | Ok sln -> Error(e, sln)
                                                    | Error (e1, sln) -> Error(Set.union e1 e, sln)
-        operation {
+        result {
             let! sln = match parseDependenciesRecursive parseProject projectPath with
                                 | Ok dependencies -> createSln dependencies |> Ok
                                 | Error (dependencies,errors) -> Error(errors, createSln dependencies)

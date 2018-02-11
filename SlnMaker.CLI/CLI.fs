@@ -124,7 +124,6 @@ module MakerCli =
     let onSuccess again () =
         if ifUserWantsToContinue() then again()
         else sayFairwell()
-
     let rec performDialog() =
         Console.ForegroundColor <- ConsoleColor.Green
         printText HELP

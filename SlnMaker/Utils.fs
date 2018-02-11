@@ -10,7 +10,7 @@ module Utils =
         member __.Return x =
             Some x
 
-    type OperationBuilder() =
+    type ResultBuilder() =
         member __.Bind(x, f) =
             match x with
             | Error e -> Error e
@@ -19,7 +19,7 @@ module Utils =
         member __.ReturnFrom x = x
 
     let maybe = MaybeBuilder()
-    let operation = OperationBuilder()
+    let result = ResultBuilder()
 
     let isNullOrEmpty = System.String.IsNullOrEmpty
 

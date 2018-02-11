@@ -12,14 +12,14 @@ module public Maker =
     let private generateSlnPrivate slnDir slnName projectPath =
         let executeAdd sln (prj:ProjectFile) = DotNetCli.executeAdd sln.path prj.path
         let slnPath = FileOperation.combinePath slnDir slnName
-        operation{
+        result{
             let! slnName = FileOperation.getFileNameWithoutExtension slnName
             do! DotNetCli.createSln slnDir slnName
             return! Sln.addProjectsRecursive executeAdd FileOperation.parseProject slnPath projectPath |> wrapSlnResult
         }
 
     let private generateSln rootProjectPath =
-        operation{
+        result{
             let! slnDir = FileOperation.getSlnDir rootProjectPath
             let! projectName = FileOperation.getFileNameWithoutExtension rootProjectPath
             let slnName = sprintf "%s\\%s" projectName ".sln"

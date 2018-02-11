@@ -66,7 +66,7 @@ module FileOperation =
         let tryParse = tryDo File.ReadAllText
         let tryParseRefs = tryDo parseReferences
         let parsingErrorMsg = sprintf "invalid path: %s" path
-        operation
+        result
             {
                 let! slnDir = getSlnDir path
                 let toAbsolutePath = toAbsolutePath slnDir>>optionToResult parsingErrorMsg
