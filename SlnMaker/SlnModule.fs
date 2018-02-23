@@ -31,7 +31,7 @@ module Sln =
                 match addProject executeAdd sln prj with
                 | Error (msg, sln) -> Error(Set.singleton msg,sln)
                 | Ok sln -> Ok sln
-        let rec add projects (sln:Result<Solution,(Set<string>*Solution)>) =
+        let rec add projects (sln:Result<Solution,(string Set*Solution)>) =
             match sln, projects with
             | sln, [] -> sln
             | Ok sln, prj::projects -> executeAdd sln prj |> add projects

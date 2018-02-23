@@ -10,7 +10,7 @@ type public ProjectFile =
 type public Solution =
     {
         path:string
-        projects: Set<ProjectFile>
+        projects: ProjectFile Set
     }
 
 type ValidationResult<'Model, 'Message> =

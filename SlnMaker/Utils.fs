@@ -44,7 +44,7 @@ module Utils =
         Seq.fold combiner <| Ok Set.empty <| results
 
     let combineSetResults results =
-        let combiner acc (result:Result<Set<'a>,Set<'a> *Set<'b>>) =
+        let combiner acc (result:Result<'a Set,'a Set *'b Set>) =
             match result, acc with
             | Error (ok, e) , Error (oks, errs) -> Error(Set.union ok oks, Set.union errs e)
             | Ok ok, Ok lst -> Set.union ok lst |> Ok
